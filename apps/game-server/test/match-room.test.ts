@@ -1,4 +1,6 @@
+import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
 import { Server } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { Client, type Room } from 'colyseus.js';
@@ -7,10 +9,21 @@ import type { GameState } from '@op/shared';
 import { MatchRoom } from '../src/rooms/MatchRoom.js';
 
 // Test d'intégration multijoueur : deux vrais clients WebSocket contre un vrai
-// serveur en mémoire. Nécessite la base SQLite peuplée (validation des decks).
+// serveur en mémoire. Nécessite la base SQLite PEUPLÉE (validation des decks) :
+// absente en CI (dev.db est gitignorée) -> la suite est sautée proprement.
+
+const DB_PATH = fileURLToPath(new URL('../../../packages/db/prisma/dev.db', import.meta.url));
+// SKIP_DB_TESTS=1 simule la CI (base absente) sans toucher au fichier.
+const dbReady = existsSync(DB_PATH) && process.env.SKIP_DB_TESTS !== '1';
+if (!dbReady) {
+  console.warn(
+    '[match-room.test] dev.db absente : tests d’intégration sautés (lancer pnpm ingest).',
+  );
+}
+const describeWithDb = describe.skipIf(!dbReady);
 
 const PORT = 2599;
-const URL = `ws://127.0.0.1:${PORT}`;
+const WS_URL = `ws://127.0.0.1:${PORT}`;
 
 // Deck rouge légal : leader OP01-001 + 12 cartes x4 + 1 x2 = 50.
 function legalDeck() {
@@ -79,10 +92,10 @@ afterAll(async () => {
   await server.gracefullyShutdown(false).catch(() => undefined);
 });
 
-describe('MatchRoom — intégration 2 clients', () => {
+describeWithDb('MatchRoom — intégration 2 clients', () => {
   it('partie complète : join, vues filtrées, autorisation, tours, chat, concession', async () => {
-    const c1 = new Client(URL);
-    const c2 = new Client(URL);
+    const c1 = new Client(WS_URL);
+    const c2 = new Client(WS_URL);
 
     // --- Ann crée / rejoint la file publique de test ---
     const room1 = await c1.joinOrCreate('match', {
@@ -164,9 +177,9 @@ describe('MatchRoom — intégration 2 clients', () => {
   }, 30_000);
 
   it('un spectateur voit la partie mais aucune main, et ne peut pas agir', async () => {
-    const c1 = new Client(URL);
-    const c2 = new Client(URL);
-    const c3 = new Client(URL);
+    const c1 = new Client(WS_URL);
+    const c2 = new Client(WS_URL);
+    const c3 = new Client(WS_URL);
 
     const room1 = await c1.joinOrCreate('match', {
       name: 'Ann',
@@ -200,7 +213,7 @@ describe('MatchRoom — intégration 2 clients', () => {
   }, 30_000);
 
   it('refuse un deck illégal à la porte (49 cartes)', async () => {
-    const c = new Client(URL);
+    const c = new Client(WS_URL);
     const deck = legalDeck();
     deck.cards[deck.cards.length - 1] = { cardId: 'OP01-016', variantId: 'OP01-016', quantity: 1 };
     await expect(
@@ -209,10 +222,10 @@ describe('MatchRoom — intégration 2 clients', () => {
   }, 15_000);
 });
 
-describe('MatchRoom — reconnexion', () => {
+describeWithDb('MatchRoom — reconnexion', () => {
   it('une déconnexion sauvage puis une reconnexion ne perd pas la partie', async () => {
-    const c1 = new Client(URL);
-    const c2 = new Client(URL);
+    const c1 = new Client(WS_URL);
+    const c2 = new Client(WS_URL);
     const room1 = await c1.joinOrCreate('match', {
       name: 'Ann',
       code: 'TEST-RECO',
@@ -239,7 +252,7 @@ describe('MatchRoom — reconnexion', () => {
     await room2.leave(false);
     expect((await presence1.next()).connected).toBe(false);
 
-    const room2bis = await new Client(URL).reconnect(token);
+    const room2bis = await new Client(WS_URL).reconnect(token);
     const views2bis = collect<ViewMessage>(room2bis, 'view');
     room2bis.send('requestView');
     const restored = await views2bis.next();
