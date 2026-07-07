@@ -1,1 +1,59 @@
 @import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Thème "pont de navire pirate" pour la table de jeu (/play).
+   Tout est en CSS pur (gradients) : aucune ressource externe.
+--------------------------------------------------------------------------- */
+
+/* Pont : planches de bois verticales */
+.wood-deck {
+  background-color: #241509;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.35) 0px,
+      rgba(0, 0, 0, 0) 5px,
+      rgba(255, 255, 255, 0.02) 60px,
+      rgba(0, 0, 0, 0) 115px,
+      rgba(0, 0, 0, 0.4) 121px
+    ),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 2px, rgba(0, 0, 0, 0.06) 2px 5px),
+    linear-gradient(180deg, #3b2416, #2b1a0f 55%, #20130a);
+}
+
+/* Panneau "planche" : zones du plateau */
+.plank {
+  background-color: rgba(52, 32, 18, 0.92);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.3));
+  border: 1px solid rgba(133, 84, 40, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 3px 10px rgba(0, 0, 0, 0.55);
+}
+
+/* Panneau sombre creusé (main, journal) : cale du navire */
+.hold {
+  background-color: rgba(20, 12, 6, 0.9);
+  border: 1px solid rgba(133, 84, 40, 0.4);
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.7);
+}
+
+/* Cordage : séparation des deux moitiés du terrain */
+.rope-divider {
+  height: 7px;
+  border-radius: 9999px;
+  background-image: repeating-linear-gradient(45deg, #9a6a33 0 7px, #6b431f 7px 14px);
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Étiquette de zone gravée */
+.zone-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(217, 169, 105, 0.75);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
