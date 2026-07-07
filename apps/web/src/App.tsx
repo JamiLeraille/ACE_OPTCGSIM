@@ -1,6 +1,7 @@
 import { BrowserRouter, Link, NavLink, Route, Routes } from 'react-router-dom';
 import { BuilderPage } from './pages/BuilderPage';
 import { DeckPage } from './pages/DeckPage';
+import { OnlinePage } from './pages/OnlinePage';
 import { PlayPage } from './pages/PlayPage';
 
 export default function App() {
@@ -29,6 +30,14 @@ export default function App() {
               >
                 Jouer (hotseat)
               </NavLink>
+              <NavLink
+                to="/online"
+                className={({ isActive }) =>
+                  isActive ? 'font-semibold text-sky-400' : 'text-slate-400 hover:text-slate-200'
+                }
+              >
+                Jouer en ligne
+              </NavLink>
             </nav>
           </div>
           <p className="hidden text-[11px] text-slate-600 md:block">
@@ -41,6 +50,7 @@ export default function App() {
             <Route path="/" element={<BuilderPage />} />
             <Route path="/deck/:id" element={<DeckPage />} />
             <Route path="/play" element={<PlayPage />} />
+            <Route path="/online" element={<OnlinePage />} />
           </Routes>
         </main>
       </div>

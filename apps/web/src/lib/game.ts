@@ -85,3 +85,30 @@ export function setupFromSimText(
     warnings,
   };
 }
+
+// --- Multijoueur : payload de deck envoyé au serveur (qui revalide tout) ---
+
+export interface DeckPayload {
+  leaderVariantId: string;
+  cards: { cardId: string; variantId: string; quantity: number }[];
+}
+
+export function deckPayloadFromSimText(
+  text: string,
+  byCardId: Map<string, CardWithVariants>,
+): { payload: DeckPayload | null; errors: string[] } {
+  const result = setupFromSimText('x', text, byCardId);
+  if (!result.setup) return { payload: null, errors: result.errors };
+
+  // Regroupe les 50 variantIds développés en entrées (cardId, variantId, qty)
+  const byVariant = new Map<string, number>();
+  for (const variantId of result.setup.cards) {
+    byVariant.set(variantId, (byVariant.get(variantId) ?? 0) + 1);
+  }
+  const cards = [...byVariant.entries()].map(([variantId, quantity]) => ({
+    cardId: variantId.replace(/_[a-z]\d+$/, ''),
+    variantId,
+    quantity,
+  }));
+  return { payload: { leaderVariantId: result.setup.leaderVariantId, cards }, errors: [] };
+}

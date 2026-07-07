@@ -8,13 +8,14 @@ Construction par couches : deck-builder d'abord, puis plateau, multijoueur temps
 
 ## Monorepo (pnpm workspaces + Turborepo)
 
-| Package           | Rôle                                                                   |
-| ----------------- | ---------------------------------------------------------------------- |
-| `apps/web`        | React + Vite + Tailwind — deck-builder (Phase 1), table de jeu ensuite |
-| `apps/api`        | Fastify + Zod — comptes, decks, catalogue (Phase 1)                    |
-| `apps/ingest`     | Scraper Bandai → normalisation → upsert idempotent (Phase 0)           |
-| `packages/shared` | Types du domaine + schémas Zod — source de vérité unique               |
-| `packages/db`     | Prisma (SQLite dev / Postgres prod)                                    |
+| Package            | Rôle                                                                   |
+| ------------------ | ---------------------------------------------------------------------- |
+| `apps/web`         | React + Vite + Tailwind — deck-builder (Phase 1), table de jeu ensuite |
+| `apps/api`         | Fastify + Zod — comptes, decks, catalogue (Phase 1)                    |
+| `apps/ingest`      | Scraper Bandai → normalisation → upsert idempotent (Phase 0)           |
+| `apps/game-server` | Colyseus — serveur autoritaire multijoueur (rooms, spectateurs, chat)  |
+| `packages/shared`  | Types du domaine + schémas Zod + moteur @op/engine — source de vérité  |
+| `packages/db`      | Prisma (SQLite dev / Postgres prod)                                    |
 
 ## Démarrage
 

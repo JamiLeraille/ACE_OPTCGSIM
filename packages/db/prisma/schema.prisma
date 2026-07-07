@@ -111,3 +111,20 @@ model DeckCard {
   @@id([deckId, cardId])
   @@map("deck_cards")
 }
+
+/// Partie multijoueur terminée (Phase 3) : journal rejouable + résultat.
+model Match {
+  id        String   @id @default(cuid())
+  seed      Int
+  p1Name    String
+  p2Name    String
+  p1Leader  String // variantId du leader choisi
+  p2Leader  String
+  winner    String? // "p1" | "p2" | null (abandon de room)
+  winReason String?
+  turns     Int
+  log       String // JSON: GameEvent[]
+  createdAt DateTime @default(now())
+
+  @@map("matches")
+}
