@@ -92,3 +92,8 @@ export const CardVariantSchema = z.object({
   imageProxyUrl: z.string(),
   illustrator: z.string().nullable(),
 });
+
+/** Vue "catalogue" : une identité de jeu avec tous ses visuels (contrat API <-> web). */
+export interface CardWithVariants extends Card {
+  variants: CardVariant[];
+}

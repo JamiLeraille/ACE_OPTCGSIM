@@ -1,17 +1,27 @@
-import { DECK_SIZE } from '@op/shared';
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
+import { BuilderPage } from './pages/BuilderPage';
+import { DeckPage } from './pages/DeckPage';
 
 export default function App() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 text-slate-100">
-      <h1 className="text-3xl font-semibold tracking-tight">OPTCG Deck-builder</h1>
-      <p className="text-slate-400">
-        Phase 0 — fondations en place. Le deck-builder ({DECK_SIZE} cartes + leader) arrive en Phase
-        1.
-      </p>
-      <footer className="fixed bottom-4 max-w-xl px-4 text-center text-xs text-slate-500">
-        Projet fan-made, non affilié à Bandai. One Piece Card Game © Eiichiro Oda / Shueisha / Toei
-        Animation / Bandai. Gratuit, non commercial, sans publicité.
-      </footer>
-    </main>
+    <BrowserRouter>
+      <div className="flex h-screen flex-col bg-slate-950 text-slate-100">
+        <header className="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
+          <Link to="/" className="text-lg font-bold tracking-tight text-white">
+            OP <span className="text-sky-500">Deck-builder</span>
+          </Link>
+          <p className="hidden text-[11px] text-slate-600 sm:block">
+            Fan-made, non affilié à Bandai · One Piece Card Game © Eiichiro Oda / Shueisha / Toei
+            Animation / Bandai · gratuit, sans publicité
+          </p>
+        </header>
+        <main className="min-h-0 flex-1 p-4">
+          <Routes>
+            <Route path="/" element={<BuilderPage />} />
+            <Route path="/deck/:id" element={<DeckPage />} />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
   );
 }

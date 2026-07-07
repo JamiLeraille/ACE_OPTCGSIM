@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fastify/compress": "^9.0.0",
     "@op/db": "workspace:*",
     "@op/shared": "workspace:*",
     "fastify": "^5.4.0",
