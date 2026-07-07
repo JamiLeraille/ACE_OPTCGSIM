@@ -13,6 +13,7 @@
     "@op/db": "workspace:*",
     "@op/shared": "workspace:*",
     "fastify": "^5.4.0",
+    "undici": "^7.10.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {

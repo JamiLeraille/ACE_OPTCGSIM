@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { registerImageProxy } from './image-proxy.js';
 
 // API REST (comptes, decks, catalogue) — les routes arrivent en Phase 1.
 // Le trafic temps réel (Phase 3) vivra dans un serveur Colyseus séparé.
@@ -6,6 +7,7 @@ import Fastify from 'fastify';
 const app = Fastify({ logger: true });
 
 app.get('/health', () => ({ status: 'ok' }));
+registerImageProxy(app);
 
 const port = Number(process.env.PORT ?? 3001);
 
