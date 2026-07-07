@@ -20,17 +20,21 @@ export function PlayCard({
   width = 'w-16',
   selected,
   onClick,
+  onContextMenu,
   powerLabel,
 }: {
   card: CardInstance;
   width?: string;
   selected?: boolean;
   onClick?: () => void;
+  /** Clic droit : menu d'actions rapides. */
+  onContextMenu?: (e: React.MouseEvent) => void;
   powerLabel?: string | null;
 }) {
   return (
     <button
       onClick={onClick}
+      onContextMenu={onContextMenu}
       className={`relative shrink-0 ${width} transition-transform ${card.rested ? 'rotate-90' : ''} ${
         selected ? 'ring-2 ring-amber-400' : ''
       } ${onClick ? 'hover:scale-105' : 'cursor-default'}`}

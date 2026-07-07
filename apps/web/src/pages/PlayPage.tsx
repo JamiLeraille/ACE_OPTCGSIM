@@ -27,6 +27,12 @@ interface Zoom {
   zone: 'hand' | 'board';
 }
 
+/** Menu contextuel (clic droit) : mêmes actions que le zoom, ancré au curseur. */
+interface QuickMenu extends Zoom {
+  x: number;
+  y: number;
+}
+
 interface Battle {
   attackerUid: number;
   targetUid: number | null;
@@ -39,6 +45,7 @@ export function PlayPage() {
   const [game, setGame] = useState<GameState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState<Zoom | null>(null);
+  const [menu, setMenu] = useState<QuickMenu | null>(null);
   const [battle, setBattle] = useState<Battle | null>(null);
   const [handoff, setHandoff] = useState(false);
   const [showTrash, setShowTrash] = useState<PlayerId | null>(null);
@@ -300,6 +307,20 @@ export function PlayPage() {
   }
 
   const zoomData = zoom ? zoomContent(zoom) : null;
+  const menuData = menu ? zoomContent(menu) : null;
+
+  /** Clic droit : ouvre le menu d'actions rapides au curseur. */
+  function openMenu(e: React.MouseEvent, player: PlayerId, uid: number, zone: 'hand' | 'board') {
+    e.preventDefault();
+    setZoom(null);
+    setMenu({
+      player,
+      uid,
+      zone,
+      x: Math.min(e.clientX, window.innerWidth - 250),
+      y: Math.min(e.clientY, window.innerHeight - 320),
+    });
+  }
 
   /** Clic sur une carte du plateau adverse : cible de combat prioritaire, sinon zoom. */
   function onFoeBoardCard(uid: number) {
@@ -406,6 +427,7 @@ export function PlayPage() {
           mirrored
           powerLabel={powerLabel}
           onBoardCard={onFoeBoardCard}
+          onBoardCardMenu={(uid, e) => openMenu(e, foe, uid, 'board')}
           highlightUid={battle?.targetUid ?? null}
           onTrash={() => setShowTrash(foe)}
           onDamage={() => dispatch({ type: 'takeDamage', player: foe })}
@@ -419,6 +441,7 @@ export function PlayPage() {
           board={myBoard}
           powerLabel={powerLabel}
           onBoardCard={(uid) => setZoom({ player: me, uid, zone: 'board' })}
+          onBoardCardMenu={(uid, e) => openMenu(e, me, uid, 'board')}
           onTrash={() => setShowTrash(me)}
           onDamage={() => dispatch({ type: 'takeDamage', player: me })}
           onDraw={() => dispatch({ type: 'draw', player: me })}
@@ -439,6 +462,7 @@ export function PlayPage() {
                 card={c}
                 width="w-20"
                 onClick={() => setZoom({ player: me, uid: c.uid, zone: 'hand' })}
+                onContextMenu={(e) => openMenu(e, me, c.uid, 'hand')}
               />
             ))}
           </div>
@@ -466,6 +490,60 @@ export function PlayPage() {
           actions={zoomData.actions}
           onClose={() => setZoom(null)}
         />
+      )}
+
+      {/* Menu contextuel (clic droit) : actions rapides sans passer par le zoom */}
+      {menu && menuData && (
+        <>
+          <div
+            className="fixed inset-0 z-50"
+            onClick={() => setMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setMenu(null);
+            }}
+          />
+          <div
+            className="plank fixed z-[60] w-60 rounded-xl p-1.5 shadow-2xl"
+            style={{ left: menu.x, top: menu.y }}
+          >
+            <p className="zone-label px-2 py-1">
+              {menuData.visible
+                ? (byCardId.get(menuData.card.cardId)?.name ?? menuData.card.cardId)
+                : 'Carte cachée'}
+            </p>
+            <button
+              onClick={() => {
+                setZoom({ player: menu.player, uid: menu.uid, zone: menu.zone });
+                setMenu(null);
+              }}
+              className="block w-full rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-stone-200 hover:bg-stone-800"
+            >
+              🔍 Voir en grand
+            </button>
+            {menuData.actions.map((a) => (
+              <button
+                key={a.label}
+                disabled={a.disabled}
+                onClick={() => {
+                  a.run();
+                  setMenu(null);
+                }}
+                title={a.hint}
+                className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-xs font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
+                  a.variant === 'danger'
+                    ? 'text-red-300 hover:bg-red-950/60'
+                    : a.variant === 'primary'
+                      ? 'text-amber-300 hover:bg-amber-950/60'
+                      : 'text-stone-200 hover:bg-stone-800'
+                }`}
+              >
+                {a.label}
+                {a.hint && <span className="block text-[10px] text-red-400">{a.hint}</span>}
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Trash */}
@@ -514,6 +592,7 @@ function FieldHalf({
   mirrored,
   powerLabel,
   onBoardCard,
+  onBoardCardMenu,
   highlightUid,
   onTrash,
   onDamage,
@@ -524,6 +603,7 @@ function FieldHalf({
   mirrored?: boolean;
   powerLabel: (card: CardInstance) => string | null;
   onBoardCard: (uid: number) => void;
+  onBoardCardMenu?: (uid: number, e: React.MouseEvent) => void;
   highlightUid?: number | null;
   onTrash: () => void;
   onDamage: () => void;
@@ -539,13 +619,21 @@ function FieldHalf({
           powerLabel={powerLabel(board.leader)}
           selected={highlightUid === board.leader.uid}
           onClick={() => onBoardCard(board.leader.uid)}
+          onContextMenu={(e) => onBoardCardMenu?.(board.leader.uid, e)}
         />
       </Zone>
       <Zone label="Stage">
         {board.stage ? (
           (() => {
             const stage = board.stage;
-            return <PlayCard card={stage} width="w-16" onClick={() => onBoardCard(stage.uid)} />;
+            return (
+              <PlayCard
+                card={stage}
+                width="w-16"
+                onClick={() => onBoardCard(stage.uid)}
+                onContextMenu={(e) => onBoardCardMenu?.(stage.uid, e)}
+              />
+            );
           })()
         ) : (
           <div className="flex aspect-[480/671] w-16 items-center justify-center rounded-md border border-dashed border-amber-900/60 text-[9px] text-stone-600">
@@ -563,6 +651,7 @@ function FieldHalf({
               powerLabel={powerLabel(c)}
               selected={highlightUid === c.uid}
               onClick={() => onBoardCard(c.uid)}
+              onContextMenu={(e) => onBoardCardMenu?.(c.uid, e)}
             />
           ))}
           {board.characters.length === 0 && (
