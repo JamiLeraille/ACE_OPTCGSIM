@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.turbo/
+coverage/
+
+# Databases (SQLite dev)
+*.db
+*.db-journal
+
+# Environment
+.env
+.env.local
+
+# Prisma generated client
+packages/db/src/generated/
+
+# Misc
+.DS_Store
+*.log

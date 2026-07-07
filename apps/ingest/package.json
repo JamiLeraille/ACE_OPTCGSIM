@@ -1,0 +1,24 @@
+{
+  "name": "@op/ingest",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ingest": "tsx src/index.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@op/db": "workspace:*",
+    "@op/shared": "workspace:*",
+    "cheerio": "^1.1.0",
+    "undici": "^7.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

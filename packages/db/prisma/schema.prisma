@@ -1,0 +1,113 @@
+// Schéma Prisma — SQLite en dev, compatible Postgres en prod.
+// Contraintes SQLite : pas d'enum ni de Json natifs → les enums du domaine sont des String
+// (validés par les schémas Zod de @op/shared) et les listes sont des String JSON-encodées
+// (JSONB natif possible à la migration Postgres sans changer le modèle logique).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Identité de JEU. Clé = numéro sans suffixe de variante (ex. "OP01-001").
+/// Toutes les règles s'appuient dessus, jamais sur la variante.
+model Card {
+  id          String  @id // "OP01-001"
+  name        String
+  category    String // LEADER | CHARACTER | EVENT | STAGE | DON
+  colors      String // JSON: Color[]
+  cost        Int?
+  power       Int?
+  counter     Int?
+  life        Int? // Leaders uniquement
+  attribute   String // JSON: Attribute[]
+  types       String // JSON: string[]
+  effectText  String
+  triggerText String?
+  effect      String? // JSON: EffectScript data-driven (Phase 4), null pour l'instant
+  setCode     String
+
+  // Ingestion : détection d'errata + audit
+  contentHash String  @default("")
+  raw         String? // HTML brut de la fiche, pour audit et re-parsing
+  needsReview Boolean @default(false)
+
+  variants  CardVariant[]
+  deckCards DeckCard[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([setCode])
+  @@index([category])
+  @@map("cards")
+}
+
+/// VISUEL. Plusieurs par Card. Aucun impact sur les règles.
+model CardVariant {
+  id          String  @id // "OP01-001" (base) ou "OP01-006_p1" (parallèle)
+  cardId      String
+  variantType String // BASE | PARALLEL | ALT_ART | PROMO | MANGA | SP | REPRINT
+  rarity      String // C, UC, R, SR, SEC, L...
+  setCode     String
+  imageUrl    String // URL brute du CDN officiel Bandai (jamais rehébergée)
+  illustrator String?
+
+  contentHash String @default("")
+
+  card      Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  deckCards DeckCard[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([cardId])
+  @@index([setCode])
+  @@map("card_variants")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  handle       String   @unique
+  email        String?  @unique
+  passwordHash String?
+  elo          Int      @default(1000)
+  decks        Deck[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Deck {
+  id              String  @id @default(cuid())
+  ownerId         String? // null = deck anonyme
+  name            String
+  leaderVariantId String // leader + sa variante visuelle choisie
+  isPublic        Boolean @default(false)
+
+  owner     User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  cards     DeckCard[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([ownerId])
+  @@map("decks")
+}
+
+/// Entrée de deck : la quantité compte par identité (cardId, "max 4 par numéro"),
+/// la variante ne porte que le visuel choisi.
+model DeckCard {
+  deckId    String
+  cardId    String
+  variantId String
+  quantity  Int
+
+  deck    Deck        @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  card    Card        @relation(fields: [cardId], references: [id])
+  variant CardVariant @relation(fields: [variantId], references: [id])
+
+  @@id([deckId, cardId])
+  @@map("deck_cards")
+}
